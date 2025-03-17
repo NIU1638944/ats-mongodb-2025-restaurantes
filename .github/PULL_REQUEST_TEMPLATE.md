@@ -4,7 +4,7 @@
    - 
    - **G6_08_30**: 
    - **arnau.antunez@autonoma.cat y juan.blancas@autonoma.cat**:
-   - **1638944 y **
+   - **1638944 y 163**
 
    ## Resumen de la Entrega
 
