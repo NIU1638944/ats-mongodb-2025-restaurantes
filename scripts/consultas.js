@@ -67,3 +67,46 @@ db.restaurants.aggregate([
         }
     }
 ]);
+
+
+
+// Creación de restaurants_summary para consultas frecuentes
+db.restaurants.aggregate([
+    {
+        $lookup: {
+            from: "inspections",
+            localField: "_id",
+            foreignField: "restaurant_id",
+            as: "inspections"
+        }
+    },
+    {
+        $addFields: {
+            latest_inspection: {
+                $arrayElemAt: [
+                    { $sortArray: { input: "$inspections", sortBy: { date: -1 } } }, 0
+                ]
+            }
+        }
+    },
+    {
+        $project: {
+            _id: 1,
+            name: 1,
+            type_of_food: 1,
+            rating: 1,
+            "location.city": "$address line 2",
+            "location.postcode": "$postcode",
+            "latest_inspection.date": "$latest_inspection.date",
+            "latest_inspection.result": "$latest_inspection.result"
+        }
+    },
+    {
+        $merge: { into: "restaurants_summary", whenMatched: "replace", whenNotMatched: "insert" }
+    }
+]);
+
+// índices para mejor rendimiento
+db.restaurants_summary.createIndex({ type_of_food: 1, "location.city": 1 });
+db.restaurants_summary.createIndex({ rating: -1 });
+db.restaurants_summary.createIndex({ "latest_inspection.result": 1 });
