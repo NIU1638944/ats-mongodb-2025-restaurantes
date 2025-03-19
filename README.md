@@ -1,69 +1,100 @@
-# ATS MongoDB 2025: Sistema de Inspecciones de Restaurantes
+# PRAC1 ATS
 
-## Descripción
+## Autores
+**Arnau Antúnez** | 1638944  
+**Juan Blancas** | 1639220  
 
-Esta práctica consiste en trabajar con un sistema de inspecciones de restaurantes utilizando MongoDB. Deberás diseñar un esquema adecuado, implementar consultas y optimizar el rendimiento de la base de datos.
+## Informe ATS
 
-## Estructura del Repositorio
+### Caso de Uso: Plataforma de Restaurantes y Salud Pública
+Para justificar las decisiones de diseño en la práctica, se ha definido un caso de uso realista basado en la necesidad de los usuarios de encontrar restaurantes con información relevante sobre su calificación e inspecciones sanitarias. En este escenario, una plataforma permite a los usuarios:
 
-- **datasets/**: Contiene los archivos JSON con datos de restaurantes e inspecciones.
-- **scripts/**: Aquí deberas incluir tu codigo que utilices y el código de tus consultas.
-- **templates/**: Por ahora vacía, reservada para incluir algún ejemplo.
-- **docs/**: Documentación y guías de la práctica.
+- Buscar restaurantes en su ciudad filtrando por tipo de comida.
+- Consultar la calificación media de los restaurantes para tomar decisiones informadas.
+- Ver el historial de inspecciones sanitarias de cada restaurante y comprobar que cumple con la normativa vigente.
 
-## Fechas Importantes
+## 1. Tareas Obligatorias
+### 1.1. Diseño del esquema de la base de datos
+#### a) Entidades principales
+Los datos que tenemos en los JSON corresponden a dos entidades principales:
 
-- **06/03/2025**: Explicación, análisis del dataset, diseño inicial. Trabajo en grupo.
-- **20/03/2025**: Exposición de los resultados en una presentación de máximo 10 minutos.
+- **restaurants**: Contiene información general de los restaurantes.
+- **inspections**: Contiene las inspecciones sanitarias realizadas a los restaurantes.
 
-## Documentación
+Un restaurante puede estar vinculado a múltiples inspecciones, pero cada inspección pertenece a un solo restaurante, por lo tanto, es una relación **One-to-Many**.
 
-Consulta la documentación completa en los siguientes archivos dentro del directorio `docs/`:
+#### b) Uso de referencias en lugar de documentos embebidos
+Ventajas:
 
-- [Guía de la Práctica](docs/GUIA_PRACTICA.md): Explicación detallada del dataset y tareas a realizar.
-- [Instrucciones de Entrega](docs/INSTRUCCIONES_ENTREGA.md): Proceso de entrega y evaluación.
-- [Enunciado de la Práctica](docs/ENUNCIADO.md): Descripción completa de la práctica y objetivos.
+1. **Escalabilidad**: Si cada restaurante tuviera muchas inspecciones, el documento embebido podría crecer demasiado. En MongoDB hay un límite de 16 MB por documento.
+2. **Consultas eficientes**: Con el uso de referencias, podemos buscar inspecciones sin cargar datos del restaurante completo.
+3. **Facilidad de actualización**: Si una inspección cambia, se puede modificar sin afectar el documento del restaurante.
 
-## Instalación y Configuración
+#### c) Esquema de validación
+- La dirección se ha estructurado como un subdocumento con campos específicos (`street`, `city`, `postcode`).
+- Se han impuesto límites en la calificación (0 a 10) y en el código postal.
+- Validación de URL para asegurar que tenga el prefijo `http://` o `https://`.
+- Restricciones en `inspections.json`:
+  - Fecha obligatoria en formato `YYYY-MM-DD`.
+  - Clasificación del resultado en valores predefinidos (`Pass`, `Fail`, `Violation Issued`, etc.).
+  - Estructura de dirección similar a la de los restaurantes para coherencia.
 
-### Requisitos Previos
+### 1.2. Implementación de consultas en MongoDB
+Ejemplos de consultas implementadas:
 
-- Cuenta en MongoDB Atlas (si trabajáis en la nube)
-- MongoDB instalado (versión 6.0 o superior).
-- MongoDB Compass (opcional, para visualización de datos o trabajar con la shell).
-- MongoDB Shell (mongosh) para ejecutar consultas.
-- Python 3.9+ (para scripts opcionales de procesamiento de datos).
-- Otras herramientas como NoSQLBooster o Studio 3T.
-- API Key OpenAI (opcional y solicitar previamente)
+- Buscar todos los restaurantes de un tipo de comida específico (ej. "Chinese").
+- Listar las inspecciones con violaciones, ordenadas por fecha.
+- Encontrar restaurantes con una calificación superior a 4.
 
-### Importación de Datos
+El código de estas consultas se encuentra en el archivo `consultas.js` dentro de la carpeta `scripts` del repositorio de GitHub.
 
-1. Clona este repositorio:
-   ```bash
-   git clone https://github.com/albertgilopez/ats-mongodb-2025-restaurantes.git
-   cd ats-mongodb-2025-restaurantes
-   ```
-2. Importa los datos en MongoDB:
+### 1.3. Uso de agregaciones
+Consultas implementadas con agregaciones:
 
-En localhost:
+- Agrupar restaurantes por tipo de comida y calcular la calificación promedio.
+- Contar el número de inspecciones por resultado y mostrar los porcentajes.
+- Unir restaurantes con sus inspecciones utilizando `$lookup`.
 
-```bash
-mongoimport --db restaurant_db --collection restaurants --file datasets/restaurants.json --jsonArray
-mongoimport --db restaurant_db --collection inspections --file datasets/inspections.json --jsonArray
+## 2. Tareas Avanzadas
+### 2.1. Optimización del rendimiento
+Consultas más frecuentes:
+
+| Consulta | Explicación |
+|----------|------------|
+| Buscar restaurantes por tipo de comida y/o ciudad | Para que los usuarios encuentren restaurantes de un tipo específico en su ubicación. |
+| Ordenar restaurantes por calificación | Mostrar los mejores restaurantes primero. |
+| Buscar inspecciones con violaciones sanitarias | Permite a los usuarios ver si un restaurante ha suspendido inspecciones antes de decidir visitarlo. |
+
+Índices creados para mejorar el rendimiento:
+
+```javascript
+ db.restaurants_summary.createIndex({ type_of_food: 1, "location.city": 1 });
+ db.restaurants_summary.createIndex({ rating: -1 });
+ db.restaurants_summary.createIndex({ "latest_inspection.result": 1 });
 ```
 
-En MongoDB Atlas:
+Antes de los índices, las consultas tardaban 2ms, después de optimizarlas tardan 0ms.
 
-```bash
-mongoimport --uri "mongodb+srv://usuario:contraseña@cluster.mongodb.net/restaurant_db" \
---collection restaurants --file restaurants.json --jsonArray
-mongoimport --uri "mongodb+srv://usuario:contraseña@cluster.mongodb.net/restaurant_db" \
---collection inspections --file inspections.json --jsonArray
-```
+### 2.2. Estrategias de escalabilidad
+#### a) **Sharding**
+Distribución de datos en varios servidores para evitar sobrecarga. Se seleccionó `location.city` con un índice `hashed` ya que la mayoría de las consultas filtran restaurantes por ciudad.
 
-**O utilizar el proceso de importacion de datos desde MongoDB Compass**.
+#### b) **Replicación**
+Configuración del **Replica Set** con tres nodos:
 
-## Contacto
+- **Primary Node**: Maneja todas las operaciones de escritura y lectura.
+- **Secondary Nodes**: Mantienen copias actualizadas de los datos y responden a consultas de solo lectura.
+- **Arbiter**: No almacena datos, pero participa en la elección de un nuevo Primary en caso de fallo.
 
-Para cualquier duda, consulta la documentación en `docs/`, escribe vía Discord o por correo electrónico.
+### Desafíos y soluciones
 
+1. **Carga desigual entre shards**
+   - **Problema**: Algunas ciudades pueden tener más consultas que otras.
+   - **Solución**: Uso de **Zonas de Sharding** para asignar shards específicos a ciertas regiones.
+
+2. **Sobrecarga en las operaciones de escritura**
+   - **Problema**: Escrituras masivas pueden generar sobrecarga en el sistema.
+   - **Solución**: Aplicar escrituras limitadas por una ventana de "x" escrituras, para procesarlas en lotes controlados.
+
+---
+Este informe describe las estrategias de diseño, consultas y escalabilidad implementadas para optimizar la base de datos en una plataforma de restaurantes y salud pública.
