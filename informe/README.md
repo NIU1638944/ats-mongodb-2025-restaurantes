@@ -123,4 +123,4 @@ Configuración del **Replica Set** con tres nodos:
    - **Solución**: Aplicar escrituras limitadas por una ventana de "x" escrituras, para procesarlas en lotes controlados.
 
 ---
-Este informe describe las estrategias de diseño, consultas y escalabilidad implementadas para optimizar la base de datos en una plataforma de restaurantes y salud pública.
+
