@@ -39,10 +39,10 @@ Ventajas:
   - Clasificación del resultado en valores predefinidos (`Pass`, `Fail`, `Violation Issued`, etc.).
   - Estructura de dirección similar a la de los restaurantes para coherencia.
 
-![Esquema de validación de restaurants](images/F1.png)  
+![Figura 1](../images/F1.png)  
 <p align="center"><strong><em>Figura 1.</em></strong></p>
 
-![Esquema de validación de inspections](images/F2.png)  
+![Figura 2](../images/F2.png)  
 <p align="center"><strong><em>Figura 2.</em></strong></p>
 
 ### 1.2. Implementación de consultas en MongoDB
@@ -52,7 +52,7 @@ Ejemplos de consultas implementadas:
 - Listar las inspecciones con violaciones, ordenadas por fecha.
 - Encontrar restaurantes con una calificación superior a 4.
 
-![Consultas en MongoDB](images/F3.png)  
+![Figura 3](../images/F3.png)  
 <p align="center"><strong><em>Figura 3.</em></strong></p>
 
 El código de estas consultas se encuentra en el archivo `consultas.js` dentro de la carpeta `scripts` del repositorio de GitHub.
@@ -62,17 +62,17 @@ Consultas implementadas con agregaciones:
 
 - Agrupar restaurantes por tipo de comida y calcular la calificación promedio.
 
-![Uso de agregaciones](images/F4.png)  
+![Figura 4](../images/F4.png)  
 <p align="center"><strong><em>Figura 4.</em></strong></p>
 
 - Contar el número de inspecciones por resultado y mostrar los porcentajes.
 
-![Porcentajes de inspecciones](images/F5.png)  
+![Figura 5](../images/F5.png)  
 <p align="center"><strong><em>Figura 5.</em></strong></p>
 
 - Unir restaurantes con sus inspecciones utilizando `$lookup`.
 
-![Unión de restaurantes e inspecciones](images/F6.png)  
+![Figura 6](../images/F6.png)  
 <p align="center"><strong><em>Figura 6.</em></strong></p>
 
 ## 2. Tareas Avanzadas
@@ -95,10 +95,10 @@ Consultas más frecuentes:
 
 Antes de los índices, las consultas tardaban 2ms, después de optimizarlas tardan 0ms.
 
-![Ejecución de consultas antes de índices](images/F7.png)  
+![Figura 7](../images/F7.png)  
 <p align="center"><strong><em>Figura 7.</em></strong></p>
 
-![Ejecución de consultas después de índices](images/F8.png)  
+![Figura 8](../images/F8.png)  
 <p align="center"><strong><em>Figura 8.</em></strong></p>
 
 ### 2.2. Estrategias de escalabilidad
